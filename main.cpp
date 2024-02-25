@@ -149,11 +149,11 @@ void build_grid(int w, int h, int cell_size, vector<Mass>& m){
 }
 void draw_grid();
 
+
 int main() {
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     const int screenWidth = 800;
     const int screenHeight = 450;
-    double scroll_speed=10;
     double speed_multiplier=0.05;
 
     int to_add_mass=10;
@@ -164,13 +164,29 @@ int main() {
 
     InitWindow(screenWidth, screenHeight, "Orbiter");
 
+    const float zoomIncrement = 0.125f;
+    Camera2D camera = { 0 };
+    camera.zoom=1.0f;
+
     SetTargetFPS(60);
 
     Point start_point, end_point;
     bool pause=false;
 
     while (!WindowShouldClose()) {
-        
+
+        float wheel = GetMouseWheelMove();
+        if (wheel != 0){
+            //camera.target = (Vector2){ player.x + 20.0f, player.y + 20.0f };
+            //camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+            camera.target = GetScreenToWorld2D(GetMousePosition(), camera);
+            camera.offset = GetMousePosition();
+            camera.rotation = 0.0f;
+            camera.zoom += (wheel*zoomIncrement);
+            if (camera.zoom < zoomIncrement) camera.zoom = zoomIncrement;
+        }
+
+
         //listent to spacebar to pause the simulation
         if (IsKeyPressed(KEY_SPACE)) {
             pause=(!pause);
@@ -178,6 +194,12 @@ int main() {
         //delete all the current masses
         if (IsKeyPressed(KEY_DELETE)) {
             masses.clear();
+        }
+        if (IsKeyDown(KEY_UP)) {
+            to_add_mass+=10;
+        }
+        if (IsKeyDown(KEY_DOWN)) {
+            to_add_mass-=10;
         }
         //corse mass adjustment
         if (IsKeyPressed(KEY_KP_SUBTRACT)) {
@@ -199,29 +221,30 @@ int main() {
             masses.push_back(Mass(to_add_mass, start_point, new_vel));
         }
         //increase/decrease the mass for the future new objects
-        to_add_mass+=GetMouseWheelMove()*scroll_speed;
 
         BeginDrawing();
-        ClearBackground(GRAY);
-        //for each object update velocity vector, position and draw
-        for(int i=0; i<masses.size(); i++){
-            if(!pause){
-                masses[i].update_velocity(masses);
-                masses[i].update_position();
-            }
-            masses[i].draw();
-        }
-        //dispay the mass for the future object
-        string s="size "+to_string(to_add_mass);
-        DrawText(s.c_str(),5,10,15, WHITE);
+            ClearBackground(GRAY);
+            //for each object update velocity vector, position and draw
+            BeginMode2D(camera);
+                for(int i=0; i<masses.size(); i++){
+                    if(!pause){
+                        masses[i].update_velocity(masses);
+                        masses[i].update_position();
+                    }
+                    masses[i].draw();
+                }
+                //dispay the mass for the future object
+                string s="size "+to_string(to_add_mass);
+                DrawText(s.c_str(),5,10,15, WHITE);
 
-        //draw_arrow(Point{150,100}, Vec{100, -PI/2});
-        build_grid(screenWidth,screenHeight, 10, masses);
+                //draw_arrow(Point{150,100}, Vec{100, -PI/2});
+                build_grid(screenWidth,screenHeight, 10, masses);
+            EndMode2D();
 
-        // Set title with FPS information
-        char title[64];
-        sprintf(title, "FPS: %02d", GetFPS());
-        SetWindowTitle(title);
+            // Set title with FPS information
+            char title[64];
+            sprintf(title, "FPS: %02d", GetFPS());
+            SetWindowTitle(title);
 
         EndDrawing();
     
