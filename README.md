@@ -6,5 +6,5 @@
 
 ## compiling
 -make sure to intall the raylib library
--to compile and run: g++ main.cpp -o out -lraylib && ./out
+-to compile and run: g++ main.cpp Mass.cpp -o out -lraylib && ./out
 

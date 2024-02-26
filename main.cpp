@@ -40,7 +40,32 @@ void build_grid(int w, int h, int cell_size, vector<Mass>& m){
         }
     }
 }
-void draw_grid();
+void draw_grid(){
+    //TODO: to implement
+}
+
+void draw_color(int w, int h, int cell_size, vector<Mass>& m){
+    int rows=h/cell_size; 
+    int cols=w/cell_size;
+    double max=10;
+    double min=0.5;
+    vector<Mass> temp;
+
+    for(int i=0; i<rows; i++){
+        for(int j=0; j<cols; j++){
+            //TODO: understand if the cell_size/2 is neaded
+            Point center= Point{j*cell_size+cell_size/2, i*cell_size+cell_size/2};
+            Mass m = Mass(1,center,Vec{0,0});
+            m.update_velocity(masses);
+            int force_mod=m.velocity.r;
+            if( force_mod > min && force_mod < max){
+                DrawRectangle(center.x, center.y, cell_size,cell_size, 
+                              Color{255, 0, 0, (unsigned char)(force_mod/max*255)});
+            }
+            temp.push_back(m);
+        }
+    }
+}
 
 
 int main() {
@@ -65,6 +90,7 @@ int main() {
 
     Point start_point, end_point;
     bool pause=false;
+    bool draw_vectors=false;
 
     while (!WindowShouldClose()) {
 
@@ -102,6 +128,10 @@ int main() {
         if (IsKeyPressed(KEY_KP_ADD)) {
             to_add_mass+=1000;
         }
+        //press V to draw the force field
+        if (IsKeyPressed(KEY_V)) {
+            draw_vectors=(!draw_vectors);
+        }
 
         //if leftbutton pressed we save the location in order to calculate the speed vector
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
@@ -119,6 +149,12 @@ int main() {
         BeginDrawing();
             ClearBackground(GRAY);
             BeginMode2D(camera);
+
+                //draw_arrow(Point{150,100}, Vec{100, -PI/2});
+                if(draw_vectors) build_grid(screenWidth,screenHeight, 10, masses);
+
+                draw_color(screenWidth,screenHeight, 1, masses);
+
                 //for each object update velocity vector, position and draw
                 for(int i=0; i<masses.size(); i++){
                     if(!pause){
@@ -131,8 +167,6 @@ int main() {
                 string s="size "+to_string(to_add_mass);
                 DrawText(s.c_str(),5,10,15, WHITE);
 
-                //draw_arrow(Point{150,100}, Vec{100, -PI/2});
-                build_grid(screenWidth,screenHeight, 10, masses);
             EndMode2D();
 
             // Set title with FPS information
@@ -149,3 +183,9 @@ int main() {
 
     return 0;
 }
+
+//TODO: fix the arrow that are broken 
+//TODO: add collision between objects
+//TODO: split build_grid and draw_grid. build_grid will only build the grid one time, draw will update and draw.
+//TODO: delete the random arrow to near to the objects
+//TODO: add colors to the arrows
