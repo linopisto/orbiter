@@ -45,6 +45,8 @@ void draw_grid(){
 }
 
 void draw_color(int w, int h, int cell_size, vector<Mass>& m){
+    //TODO:split this into generate grid and draw color.
+    //TODO: try to draw a textures instead of single rectangles
     int rows=h/cell_size; 
     int cols=w/cell_size;
     double max=10;
