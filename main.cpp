@@ -3,117 +3,10 @@
 #include <vector>
 #include <math.h>
 #include <string>
-
-#define K 0.5   //gravity constant
+#include "Mass.h"
 
 using namespace std;
 
-struct Vec{
-    double r,t;
-};
-struct CVec{
-    double x,y;
-};
-struct Point{
-    double x,y;
-};
-
-Point operator+(const Point& p1, const Point& p2){
-    return Point{p1.x+p2.x, p1.y+p2.y}; 
-}
-Point operator-(const Point& p1, const Point& p2){
-    return Point{p1.x-p2.x, p1.y-p2.y}; 
-}
-
-float distance(Point a, Point b){
-    return(sqrt(pow(a.x-b.x,2)+pow(a.y-b.y,2)));
-}
-
-//vector representaiton conversion
-CVec polar2cart(Vec v){
-    return CVec{v.r*cos(v.t), v.r*sin(v.t) };
-}
-Vec cart2polar(CVec v){
-    return Vec{sqrt(pow(v.x, 2)+pow(v.y, 2)),
-                atan2(v.y,v.x)};
-}
-
-//basic vector operation
-CVec operator+(const CVec& vec1, const CVec& vec2) {
-    CVec result;
-    result.x = vec1.x + vec2.x;
-    result.y = vec1.y + vec2.y;
-    return result;
-}
-CVec operator-(const CVec& vec1, const CVec& vec2) {
-    CVec result;
-    result.x = vec1.x - vec2.x;
-    result.y = vec1.y - vec2.y;
-    return result;
-}
-Vec operator+(const Vec& vec1, const Vec& vec2){
-    return cart2polar(polar2cart(vec1) + polar2cart(vec2));
-}
-Vec operator-(const Vec& vec1, const Vec& vec2){
-    return cart2polar(polar2cart(vec1) - polar2cart(vec2));
-}
-
-//displace a point by a vector
-Point displace(Point p, Vec v){
-    return Point{p.x+v.r*cos(v.t),p.y+v.r*sin(v.t)};
-}
-
-
-class Mass{
-    public: 
-    double mass=0;
-    int size=10;
-    int id;
-    static int counter;
-    Vec velocity;
-    Point position;
-    Color color=BLACK;
-    
-    Mass(int m, Point p, Vec v){
-        position = p;
-        velocity = v;
-        mass = m;
-        id = counter;
-        counter++;
-    }
-
-    void update_position(){
-        position.x = position.x + cos(velocity.t) * velocity.r;
-        position.y = position.y + sin(velocity.t) * velocity.r;
-    }
-
-    void update_velocity(vector<Mass>& ms){
-        for(int i = 0; i<ms.size();i++){
-            if(ms[i].id != this->id){
-                double dx = ms[i].position.x - position.x;
-                double dy = ms[i].position.y - position.y;
-                double d = sqrt(pow(dx,2)+pow(dy,2));               //distance between centers
-                double f = K*(this->mass * ms[i].mass) / pow(d,2);  //force modulo
-                Vec f_=Vec{f, atan2(dy,dx)};                        //force vector
-                Vec a_=Vec{f_.r/this->mass, f_.t};                  //acceleration vector
-                this->velocity=cart2polar(polar2cart(this->velocity)+polar2cart(a_));
-            }
-        }
-    }
-
-    void draw(){
-        // draw the object body
-        DrawCircle(position.x, position.y, log(log(mass))*size, color);
-        int len_multiplier=20;
-        //show the direction of the speed vector
-        DrawLine(position.x, position.y, 
-                position.x+velocity.r*cos(velocity.t)*len_multiplier, 
-                position.y+velocity.r*sin(velocity.t)*len_multiplier,
-                WHITE);
-    }
-
-};
-int Mass::counter=0;
 
 void draw_arrow(Point p, Vec v, double multiplier){
     Point to=Point{p.x+v.r*cos(v.t)*multiplier,
@@ -195,6 +88,7 @@ int main() {
         if (IsKeyPressed(KEY_DELETE)) {
             masses.clear();
         }
+        //add/remove mass to the next added mass
         if (IsKeyDown(KEY_UP)) {
             to_add_mass+=10;
         }
@@ -208,6 +102,7 @@ int main() {
         if (IsKeyPressed(KEY_KP_ADD)) {
             to_add_mass+=1000;
         }
+
         //if leftbutton pressed we save the location in order to calculate the speed vector
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             start_point=Point{(double)GetMouseX(),(double)GetMouseY()};
@@ -220,12 +115,11 @@ int main() {
                             atan2(delta.y,delta.x)};
             masses.push_back(Mass(to_add_mass, start_point, new_vel));
         }
-        //increase/decrease the mass for the future new objects
 
         BeginDrawing();
             ClearBackground(GRAY);
-            //for each object update velocity vector, position and draw
             BeginMode2D(camera);
+                //for each object update velocity vector, position and draw
                 for(int i=0; i<masses.size(); i++){
                     if(!pause){
                         masses[i].update_velocity(masses);
